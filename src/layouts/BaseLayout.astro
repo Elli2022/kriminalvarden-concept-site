@@ -1,0 +1,43 @@
+---
+import "../styles/global.css";
+import { withBase } from "../utils/base";
+
+const {
+  title = "Kriminalvarden Concept Site",
+  description = "Standalone modern rebuild of the Kriminalvarden concept page, with the original version preserved as a live legacy route.",
+} = Astro.props;
+
+const pageTitle =
+  title === "Kriminalvarden Concept Site" ? title : `${title} | Kriminalvarden Concept Site`;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? "https://elli2022.github.io");
+---
+
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical.toString()} />
+    <link rel="icon" type="image/png" href={withBase("/legacy/images/favicon/favicon-logo.png")} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical.toString()} />
+    <meta
+      property="og:image"
+      content={`${canonical.origin}${withBase("/legacy/images/kriminalvarden/project_kriminalvarden_big_picture.jpg")}`}
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <slot />
+  </body>
+</html>

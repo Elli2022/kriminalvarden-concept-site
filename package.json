@@ -1,0 +1,27 @@
+{
+  "name": "kriminalvarden-concept-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "astro": "^6.4.2",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "prettier": "^3.8.3",
+    "prettier-plugin-astro": "^0.14.1"
+  },
+  "packageManager": "npm@10.8.2"
+}

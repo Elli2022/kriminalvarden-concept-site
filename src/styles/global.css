@@ -1,0 +1,274 @@
+:root {
+  --bg: #0f1720;
+  --bg-soft: #172433;
+  --panel: rgba(19, 30, 43, 0.88);
+  --line: rgba(232, 236, 241, 0.12);
+  --text: #edf1f5;
+  --muted: #b6c2cf;
+  --accent: #f5c45a;
+  --accent-2: #7dc4c8;
+  --radius: 28px;
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+  --max: 1180px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "IBM Plex Sans", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(125, 196, 200, 0.16), transparent 24%),
+    radial-gradient(circle at top right, rgba(245, 196, 90, 0.12), transparent 22%),
+    linear-gradient(180deg, #101923 0%, #0e151d 100%);
+}
+
+img {
+  display: block;
+  width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+.skip-link {
+  position: absolute;
+  top: -4rem;
+  left: 1rem;
+  z-index: 100;
+  padding: 0.85rem 1rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #111;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+.topbar,
+.page-shell {
+  width: min(calc(100% - 2rem), var(--max));
+  margin: 0 auto;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(16px);
+}
+
+.topbar nav {
+  display: flex;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.topbar nav a,
+.wordmark {
+  text-decoration: none;
+}
+
+.topbar nav a {
+  color: var(--muted);
+}
+
+.wordmark,
+.hero h1,
+.card h2,
+.section-heading h2,
+.archive-band h2 {
+  font-family: "Fraunces", serif;
+}
+
+.wordmark {
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+}
+
+.page-shell {
+  padding: 2rem 0 4rem;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.4fr 0.9fr;
+  gap: 1.5rem;
+  align-items: stretch;
+  min-height: 72vh;
+}
+
+.hero__copy,
+.hero__panel,
+.card,
+.archive-band {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.hero__copy {
+  padding: clamp(2rem, 4vw, 4rem);
+}
+
+.hero__panel,
+.card {
+  padding: 1.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+  color: var(--accent);
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  line-height: 0.98;
+  max-width: 10ch;
+}
+
+.lead,
+.card p,
+.archive-band p,
+.hero__panel li {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 1.7rem;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0 1.15rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.button--primary {
+  background: var(--accent);
+  color: #111;
+}
+
+.button--ghost {
+  border: 1px solid rgba(237, 241, 245, 0.16);
+  background: rgba(237, 241, 245, 0.05);
+}
+
+.hero__panel ul {
+  padding-left: 1.2rem;
+  margin: 1rem 0 0;
+}
+
+.info-grid,
+.gallery__grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.info-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 1.5rem;
+}
+
+.card h2,
+.section-heading h2,
+.archive-band h2 {
+  margin: 0;
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.05;
+}
+
+.gallery {
+  padding-top: 4rem;
+}
+
+.section-heading {
+  max-width: 52rem;
+  margin-bottom: 1.5rem;
+}
+
+.gallery__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gallery__item {
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  min-height: 18rem;
+}
+
+.gallery__item img {
+  height: 100%;
+  object-fit: cover;
+}
+
+.archive-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-top: 4rem;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+code {
+  padding: 0.12rem 0.4rem;
+  border-radius: 0.5rem;
+  background: rgba(237, 241, 245, 0.08);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@media (max-width: 960px) {
+  .hero,
+  .info-grid,
+  .gallery__grid,
+  .archive-band {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 720px) {
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hero h1 {
+    max-width: none;
+  }
+}
