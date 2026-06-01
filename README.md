@@ -29,6 +29,7 @@ Det här repot är nu en intern planeringsapp i `Next.js + TypeScript` i ställe
 - audit-logg för inloggning, bokningsskapande, borttagning och hantering av önskemål
 - legacy-versionen kvar under `public/legacy/html/kriminalvarden.html`
 - produktion på Netlify kör ett separat demolager som inte påverkar den lokala Prisma-databasen
+- säkerhetshärdad sessions- och API-grund med CSRF-skydd, rate limiting, rollstyrning och säkra headers
 
 ## Projektstruktur
 
@@ -63,6 +64,23 @@ npm run test
 npm run build
 npm run db:reset
 ```
+
+## Säkerhet just nu
+
+- sessionscookie körs med `HttpOnly`, `Secure` i produktion, `SameSite=Strict` och begränsad livslängd
+- separat CSRF-cookie används för skrivande API-anrop
+- skrivande route handlers kräver både intern klientheader, same-origin och CSRF-token
+- inloggning och API-skrivningar har rate limiting för att bromsa brute force och missbruk
+- rollstyrning begränsar borttagning av bokningar, avfärdning av önskemål och extern import till högre behörighet
+- känsliga sidor och API-svar skickas med `no-store` och extra säkerhetsheaders
+
+## Nästa steg för verklig drift
+
+- byt från demo-inloggning till central identitet, helst SSO via arbetsgivarens katalog
+- flytta från stateless demo-session till databassessioner med revokering, enhetskontroll och timeout för inaktivitet
+- byt lokala och demo-baserade lager till driftad `PostgreSQL` med backup, krypterad lagring och strikt åtkomstkontroll
+- placera appen bakom intern nätverksåtkomst eller VPN i stället för publik demo-URL
+- lägg till fler revisionsspår, larm vid avvikande beteende och separat loggning för nekade säkerhetshändelser
 
 ## Nuvarande utvecklingsflöde
 

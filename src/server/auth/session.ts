@@ -4,9 +4,19 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
 import type { AuthenticatedUser, StaffRole } from "@/lib/planner-domain";
-
-const SESSION_COOKIE = "kv_planner_session";
-const SESSION_DURATION_SECONDS = 60 * 60 * 12;
+import {
+  CSRF_COOKIE_NAME,
+  SESSION_AUDIENCE,
+  SESSION_COOKIE_NAME,
+  SESSION_DURATION_SECONDS,
+  SESSION_ISSUER,
+  generateCsrfToken,
+} from "@/lib/security-constants";
+import {
+  buildCsrfCookieOptions,
+  buildExpiredCookieOptions,
+  buildSessionCookieOptions,
+} from "@/server/security/cookies";
 
 interface SessionPayload {
   sub: string;
@@ -36,11 +46,15 @@ function getAuthSecret() {
   const secret = process.env.AUTH_SECRET;
 
   if (secret) {
+    if (secret.length < 32) {
+      throw new Error("AUTH_SECRET maste vara minst 32 tecken.");
+    }
+
     return secret;
   }
 
   if (process.env.NODE_ENV !== "production") {
-    return "dev-only-auth-secret-change-me";
+    return "dev-only-auth-secret-change-me-32-chars";
   }
 
   throw new Error("AUTH_SECRET saknas i produktionsmiljon.");
@@ -53,42 +67,45 @@ function getSigningKey() {
 export async function createSession(user: AuthenticatedUser) {
   const cookieStore = await cookies();
   const expiresAt = new Date(Date.now() + SESSION_DURATION_SECONDS * 1000);
+  const csrfToken = generateCsrfToken();
 
   const token = await new SignJWT({
     email: user.email,
     name: user.name,
     role: user.role,
   })
-    .setProtectedHeader({ alg: "HS256" })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setSubject(user.id)
+    .setIssuer(SESSION_ISSUER)
+    .setAudience(SESSION_AUDIENCE)
+    .setJti(crypto.randomUUID())
     .setIssuedAt()
     .setExpirationTime(`${SESSION_DURATION_SECONDS}s`)
     .sign(getSigningKey());
 
-  cookieStore.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    expires: expiresAt,
-  });
+  cookieStore.set(SESSION_COOKIE_NAME, token, buildSessionCookieOptions(expiresAt));
+  cookieStore.set(CSRF_COOKIE_NAME, csrfToken, buildCsrfCookieOptions(expiresAt));
 }
 
 export async function clearSession() {
   const cookieStore = await cookies();
-  cookieStore.delete(SESSION_COOKIE);
+  cookieStore.set(SESSION_COOKIE_NAME, "", buildExpiredCookieOptions(true));
+  cookieStore.set(CSRF_COOKIE_NAME, "", buildExpiredCookieOptions(false));
 }
 
 export async function getSession(): Promise<AuthenticatedUser | null> {
   const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
   if (!token) {
     return null;
   }
 
   try {
-    const result = await jwtVerify(token, getSigningKey());
+    const result = await jwtVerify(token, getSigningKey(), {
+      issuer: SESSION_ISSUER,
+      audience: SESSION_AUDIENCE,
+    });
     const payload = result.payload;
 
     if (!isSessionPayload(payload)) {

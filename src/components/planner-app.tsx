@@ -10,11 +10,22 @@ import {
 import styles from "./planner-app.module.css";
 import { formatSwedishDateTime, formatSwedishTime } from "@/lib/date";
 import {
+  canDeleteBooking,
+  canDismissTabletRequest,
+  canUseBookingSource,
+} from "@/lib/planner-auth";
+import {
   ACTIVITY_BY_ID,
   ACTIVITY_DEFINITIONS,
   DEFAULT_ACTIVITY_ID,
   TOTAL_CAPACITY,
 } from "@/lib/planner-config";
+import {
+  CSRF_COOKIE_NAME,
+  INTERNAL_API_CLIENT_HEADER,
+  INTERNAL_API_CLIENT_VALUE,
+  MAX_NOTE_LENGTH,
+} from "@/lib/security-constants";
 import {
   getBookingsForClientActivity,
   getBookingsForClientOnDate,
@@ -71,6 +82,50 @@ function getSourceLabel(source: BookingSource): string {
   }
 }
 
+function readCookieValue(name: string) {
+  const cookies = document.cookie
+    .split(";")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  const prefixedName = `${name}=`;
+  const match = cookies.find((value) => value.startsWith(prefixedName));
+
+  if (!match) {
+    return null;
+  }
+
+  return decodeURIComponent(match.slice(prefixedName.length));
+}
+
+async function fetchInternal(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) {
+  const headers = new Headers(init?.headers);
+  const method = (init?.method ?? "GET").toUpperCase();
+
+  headers.set(INTERNAL_API_CLIENT_HEADER, INTERNAL_API_CLIENT_VALUE);
+
+  if (method !== "GET" && method !== "HEAD") {
+    const csrfToken = readCookieValue(CSRF_COOKIE_NAME);
+
+    if (!csrfToken) {
+      throw new Error("Säkerhetstoken saknas. Logga ut och in igen.");
+    }
+
+    headers.set("X-CSRF-Token", csrfToken);
+  }
+
+  return fetch(input, {
+    ...init,
+    headers,
+    cache: init?.cache ?? "no-store",
+    credentials: "same-origin",
+    mode: "same-origin",
+  });
+}
+
 export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
   const [snapshot, setSnapshot] = useState(initialSnapshot);
   const [selectedDepartmentId, setSelectedDepartmentId] =
@@ -89,6 +144,12 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const deferredSearchValue = useDeferredValue(searchValue);
   const refreshSequenceRef = useRef(0);
+  const canRemoveExistingBookings = canDeleteBooking(session.role);
+  const canHandleTabletRequests = canDismissTabletRequest(session.role);
+  const canScheduleIntegration = canUseBookingSource(
+    session.role,
+    "integration",
+  );
 
   async function refreshSnapshot(departmentId: DepartmentId, date: string) {
     const requestSequence = refreshSequenceRef.current + 1;
@@ -96,11 +157,8 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
     setIsRefreshing(true);
 
     try {
-      const response = await fetch(
+      const response = await fetchInternal(
         `/api/planner?departmentId=${encodeURIComponent(departmentId)}&date=${encodeURIComponent(date)}`,
-        {
-          cache: "no-store",
-        },
       );
 
       const payload = (await response.json()) as PlannerSnapshot & {
@@ -244,8 +302,16 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
       return;
     }
 
+    if (!canUseBookingSource(session.role, draft.source)) {
+      setFeedback({
+        tone: "error",
+        text: "Du saknar behörighet att registrera extern import.",
+      });
+      return;
+    }
+
     try {
-      const response = await fetch("/api/bookings", {
+      const response = await fetchInternal("/api/bookings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -300,8 +366,16 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
   }
 
   async function handleRemoveBooking(bookingId: string) {
+    if (!canRemoveExistingBookings) {
+      setFeedback({
+        tone: "error",
+        text: "Du saknar behörighet att ta bort bokningar.",
+      });
+      return;
+    }
+
     try {
-      const response = await fetch(
+      const response = await fetchInternal(
         `/api/bookings?bookingId=${encodeURIComponent(bookingId)}`,
         {
           method: "DELETE",
@@ -330,8 +404,16 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
   }
 
   async function handleDismissRequest(requestId: string) {
+    if (!canHandleTabletRequests) {
+      setFeedback({
+        tone: "error",
+        text: "Du saknar behörighet att markera önskemål som hanterade.",
+      });
+      return;
+    }
+
     try {
-      const response = await fetch("/api/tablet-requests/dismiss", {
+      const response = await fetchInternal("/api/tablet-requests/dismiss", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -360,7 +442,7 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
     setIsSigningOut(true);
 
     try {
-      await fetch("/api/logout", {
+      await fetchInternal("/api/logout", {
         method: "POST",
       });
     } finally {
@@ -810,7 +892,9 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
                   >
                     <option value="staff">Personal</option>
                     <option value="tablet">Padda/önskemål</option>
-                    <option value="integration">Extern import</option>
+                    {canScheduleIntegration ? (
+                      <option value="integration">Extern import</option>
+                    ) : null}
                   </select>
                 </label>
 
@@ -818,6 +902,7 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
                   <span className={styles.fieldLabel}>Anteckning</span>
                   <textarea
                     className={styles.textarea}
+                    maxLength={MAX_NOTE_LENGTH}
                     placeholder="Valfri kommentar"
                     value={draft.note}
                     onChange={(event) =>
@@ -876,13 +961,15 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
                         <div className={styles.timelineTitle}>
                           {ACTIVITY_BY_ID[booking.activityId].label}
                         </div>
-                        <button
-                          type="button"
-                          className={styles.dangerButton}
-                          onClick={() => handleRemoveBooking(booking.id)}
-                        >
-                          Ta bort
-                        </button>
+                        {canRemoveExistingBookings ? (
+                          <button
+                            type="button"
+                            className={styles.dangerButton}
+                            onClick={() => handleRemoveBooking(booking.id)}
+                          >
+                            Ta bort
+                          </button>
+                        ) : null}
                       </div>
                       <p className={styles.timelineText}>
                         {booking.startTime}-{booking.endTime} •{" "}
@@ -993,13 +1080,15 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
                           >
                             Fyll i bokning
                           </button>
-                          <button
-                            type="button"
-                            className={styles.ghostButton}
-                            onClick={() => handleDismissRequest(request.id)}
-                          >
-                            Markera som hanterad
-                          </button>
+                          {canHandleTabletRequests ? (
+                            <button
+                              type="button"
+                              className={styles.ghostButton}
+                              onClick={() => handleDismissRequest(request.id)}
+                            >
+                              Markera som hanterad
+                            </button>
+                          ) : null}
                         </div>
                       ) : null}
                     </article>

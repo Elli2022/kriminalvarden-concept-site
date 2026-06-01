@@ -1,5 +1,10 @@
 import "server-only";
 
+import {
+  canDeleteBooking,
+  canDismissTabletRequest,
+  canUseBookingSource,
+} from "@/lib/planner-auth";
 import type { AuthenticatedUser, Booking, PlannerSnapshot } from "@/lib/planner-domain";
 import { isNetlifyDemoMode } from "@/server/runtime";
 import {
@@ -37,6 +42,13 @@ export async function createBooking(
   draft: MutableBookingDraft,
   actor: AuthenticatedUser,
 ): Promise<Booking> {
+  if (!canUseBookingSource(actor.role, draft.source)) {
+    throw new PlannerServiceError(
+      "Endast arbetsledare eller administratör kan registrera extern import.",
+      403,
+    );
+  }
+
   if (isNetlifyDemoMode()) {
     return createBookingInNetlifyDemo(draft, actor);
   }
@@ -46,6 +58,13 @@ export async function createBooking(
 }
 
 export async function deleteBooking(bookingId: string, actor: AuthenticatedUser) {
+  if (!canDeleteBooking(actor.role)) {
+    throw new PlannerServiceError(
+      "Endast arbetsledare eller administratör kan ta bort bokningar.",
+      403,
+    );
+  }
+
   if (isNetlifyDemoMode()) {
     return deleteBookingInNetlifyDemo(bookingId, actor);
   }
@@ -58,6 +77,13 @@ export async function dismissTabletRequest(
   requestId: string,
   actor: AuthenticatedUser,
 ) {
+  if (!canDismissTabletRequest(actor.role)) {
+    throw new PlannerServiceError(
+      "Endast arbetsledare eller administratör kan avfärda önskemål.",
+      403,
+    );
+  }
+
   if (isNetlifyDemoMode()) {
     return dismissTabletRequestInNetlifyDemo(requestId, actor);
   }
