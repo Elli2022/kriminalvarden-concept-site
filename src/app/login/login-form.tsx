@@ -8,7 +8,11 @@ const initialState: LoginActionState = {
   error: null,
 };
 
-export function LoginForm() {
+interface LoginFormProps {
+  showDemoCredentials: boolean;
+}
+
+export function LoginForm({ showDemoCredentials }: LoginFormProps) {
   const [state, formAction, isPending] = useActionState(
     loginAction,
     initialState,
@@ -52,9 +56,9 @@ export function LoginForm() {
 
       {state.error ? <div className={styles.error}>{state.error}</div> : null}
 
-      {process.env.NODE_ENV !== "production" ? (
+      {showDemoCredentials ? (
         <div className={styles.hint}>
-          Lokal utvecklingsinloggning:
+          Demo-inloggning:
           <br />
           `admin@kriminalvarden.local`
           <br />

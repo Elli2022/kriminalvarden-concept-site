@@ -9,7 +9,7 @@ Det här repot är nu en intern planeringsapp i `Next.js + TypeScript` i ställe
 - `Prisma` som datalager mellan appen och databasen
 - `SQLite` i lokal utveckling för enkel uppstart
 - `PostgreSQL` är den tänkta produktionsvägen när systemet ska driftsättas på riktigt
-- `Netlify` är tänkt deploymål längre fram för appmiljön, medan legacy-materialet ligger kvar separat
+- `Netlify` används för publik demo, med `Netlify Blobs` som lättviktig lagring för demo-flödet
 
 ## Vad som finns nu
 
@@ -28,6 +28,7 @@ Det här repot är nu en intern planeringsapp i `Next.js + TypeScript` i ställe
 - kö för inkommande önskemål från klientpaddor
 - audit-logg för inloggning, bokningsskapande, borttagning och hantering av önskemål
 - legacy-versionen kvar under `public/legacy/html/kriminalvarden.html`
+- produktion på Netlify kör ett separat demolager som inte påverkar den lokala Prisma-databasen
 
 ## Projektstruktur
 
@@ -66,6 +67,8 @@ npm run db:reset
 ## Nuvarande utvecklingsflöde
 
 För lokal utveckling använder projektet en SQLite-databas i `prisma/dev.db`. Det gör att vi snabbt kan bygga vidare på planeringslogik, inloggning och integrationer utan att behöva drifta en extern databas redan nu.
+
+Den publika demo-versionen på Netlify använder i stället `Netlify Blobs` för att kunna spara bokningar och önskemål utan lokal SQLite i serverless-miljön.
 
 När appen går vidare mot verklig drift bör vi byta till:
 

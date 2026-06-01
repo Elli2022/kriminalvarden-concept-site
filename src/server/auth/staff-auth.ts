@@ -3,7 +3,9 @@ import "server-only";
 import bcrypt from "bcryptjs";
 import { UserRole } from "@prisma/client";
 import type { AuthenticatedUser, StaffRole } from "@/lib/planner-domain";
+import { DEMO_PASSWORD, DEMO_STAFF_USERS } from "@/server/auth/demo-users";
 import { prisma } from "@/server/db";
+import { isNetlifyDemoMode } from "@/server/runtime";
 
 function mapRole(role: UserRole): StaffRole {
   switch (role) {
@@ -20,6 +22,18 @@ export async function authenticateStaffUser(
   email: string,
   password: string,
 ): Promise<AuthenticatedUser | null> {
+  if (isNetlifyDemoMode()) {
+    const demoUser = DEMO_STAFF_USERS.find(
+      (user) => user.email === email.toLowerCase(),
+    );
+
+    if (!demoUser || password !== DEMO_PASSWORD) {
+      return null;
+    }
+
+    return demoUser;
+  }
+
   const user = await prisma.staffUser.findUnique({
     where: {
       email: email.toLowerCase(),

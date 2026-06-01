@@ -1,16 +1,5 @@
 import type { Metadata } from "next";
-import { Bitter, Public_Sans } from "next/font/google";
 import "./globals.css";
-
-const publicSans = Public_Sans({
-  variable: "--font-ui",
-  subsets: ["latin"],
-});
-
-const bitter = Bitter({
-  variable: "--font-display",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Kriminalvården planeringsyta",
@@ -24,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="sv" className={`${publicSans.variable} ${bitter.variable}`}>
+    <html lang="sv">
       <body>{children}</body>
     </html>
   );

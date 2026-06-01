@@ -21,6 +21,9 @@
     "node": ">=22.12.0"
   },
   "dependencies": {
+    "@fontsource/bitter": "^5.2.10",
+    "@fontsource/public-sans": "^5.2.7",
+    "@netlify/blobs": "^10.7.9",
     "@prisma/client": "^6.11.1",
     "bcryptjs": "^3.0.2",
     "jose": "^6.1.0",

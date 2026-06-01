@@ -1,4 +1,9 @@
+@import "@fontsource/public-sans/latin.css";
+@import "@fontsource/bitter/latin.css";
+
 :root {
+  --font-ui: "Public Sans";
+  --font-display: "Bitter";
   --background: #091520;
   --background-soft: #102334;
   --panel: rgba(255, 255, 255, 0.9);
@@ -33,7 +38,7 @@ body {
     radial-gradient(circle at top left, rgba(240, 196, 0, 0.22), transparent 34%),
     radial-gradient(circle at top right, rgba(13, 74, 106, 0.28), transparent 28%),
     linear-gradient(180deg, #08131d 0%, #0f2232 36%, #edf2f6 100%);
-  font-family: var(--font-ui), sans-serif;
+  font-family: var(--font-ui), "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

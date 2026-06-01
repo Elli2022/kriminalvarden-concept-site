@@ -1,6 +1,7 @@
 import { LoginForm } from "./login-form";
 import { redirectIfAuthenticated } from "./actions";
 import styles from "./page.module.css";
+import { shouldShowDemoCredentials } from "@/server/runtime";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export default async function LoginPage() {
 
   return (
     <main className={styles.page}>
-      <LoginForm />
+      <LoginForm showDemoCredentials={shouldShowDemoCredentials()} />
     </main>
   );
 }
