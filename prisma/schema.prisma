@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OFFICER
+  SUPERVISOR
+  ADMIN
+}
+
+enum BookingSource {
+  STAFF
+  TABLET
+  INTEGRATION
+}
+
+enum TabletRequestStatus {
+  OPEN
+  SCHEDULED
+  DISMISSED
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  BOOKING_CREATED
+  BOOKING_DELETED
+  REQUEST_DISMISSED
+}
+
+model StaffUser {
+  id               String         @id @default(cuid())
+  email            String         @unique
+  name             String
+  role             UserRole       @default(OFFICER)
+  passwordHash     String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  createdBookings  Booking[]      @relation("BookingActor")
+  dismissedRequests TabletRequest[] @relation("RequestDismissedBy")
+  auditEvents      AuditEvent[]   @relation("AuditActor")
+}
+
+model Department {
+  id             String          @id
+  label          String
+  sortOrder      Int
+  clients        Client[]
+  bookings       Booking[]
+  tabletRequests TabletRequest[]
+}
+
+model Client {
+  id                  String          @id @default(cuid())
+  clientNumber        Int             @unique
+  label               String
+  currentDepartmentId String
+  active              Boolean         @default(true)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  currentDepartment   Department      @relation(fields: [currentDepartmentId], references: [id])
+  bookings            Booking[]
+  tabletRequests      TabletRequest[]
+}
+
+model ActivityType {
+  id                    String                  @id
+  label                 String
+  shortLabel            String
+  requestable           Boolean                 @default(false)
+  colorToken            String
+  sortOrder             Int
+  bookings              Booking[]
+  tabletRequestActivities TabletRequestActivity[]
+}
+
+model TabletRequest {
+  id                  String                @id @default(cuid())
+  dateKey             String
+  clientId            String
+  departmentId        String
+  note                String                @default("")
+  preferredStartMinute Int?
+  preferredEndMinute  Int?
+  status              TabletRequestStatus   @default(OPEN)
+  submittedAt         DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  dismissedById       String?
+  client              Client                @relation(fields: [clientId], references: [id])
+  department          Department            @relation(fields: [departmentId], references: [id])
+  dismissedBy         StaffUser?            @relation("RequestDismissedBy", fields: [dismissedById], references: [id])
+  requestedActivities TabletRequestActivity[]
+  booking             Booking?
+
+  @@index([departmentId, dateKey, status])
+  @@index([clientId, dateKey])
+}
+
+model TabletRequestActivity {
+  requestId       String
+  activityTypeId  String
+  sortOrder       Int
+  request         TabletRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  activityType    ActivityType  @relation(fields: [activityTypeId], references: [id])
+
+  @@id([requestId, activityTypeId])
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  dateKey       String
+  clientId      String
+  departmentId  String
+  activityTypeId String
+  startMinute   Int
+  endMinute     Int
+  source        BookingSource
+  note          String        @default("")
+  requestId     String?       @unique
+  createdById   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+  client        Client        @relation(fields: [clientId], references: [id])
+  department    Department    @relation(fields: [departmentId], references: [id])
+  activityType  ActivityType  @relation(fields: [activityTypeId], references: [id])
+  request       TabletRequest? @relation(fields: [requestId], references: [id])
+  createdBy     StaffUser?    @relation("BookingActor", fields: [createdById], references: [id])
+
+  @@index([departmentId, dateKey])
+  @@index([clientId, dateKey, startMinute, endMinute])
+}
+
+model AuditEvent {
+  id         String      @id @default(cuid())
+  actorId    String?
+  entityType String
+  entityId   String
+  action     AuditAction
+  summary    String
+  payload    String?
+  createdAt  DateTime    @default(now())
+  actor      StaffUser?  @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+}

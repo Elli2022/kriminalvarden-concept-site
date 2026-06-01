@@ -1,3 +1,29 @@
-node_modules
-dist
-.astro
+# dependencies
+/node_modules
+
+# build output
+/.next
+/out
+/dist
+/.astro
+/prisma/dev.db
+/prisma/dev.db-journal
+
+# testing
+/coverage
+
+# misc
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env
+.env*
+
+# deployment tooling
+.vercel
+
+# typescript
+*.tsbuildinfo

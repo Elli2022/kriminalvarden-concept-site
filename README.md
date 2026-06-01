@@ -1,34 +1,76 @@
-# Kriminalvarden Concept Site
+# Kriminalvården planeringsyta
 
-Standalone rebuild of the `Kriminalvarden` page that originally lived inside an older multi-page school portfolio.
+Det här repot är nu en intern planeringsapp i `Next.js + TypeScript` i stället för en ren HTML-skiss. Målet är att ge personalen en robust översikt över klienters aktiviteter, stoppa dubbelbokningar och förbereda projektet för framtida backend, databas och integration med klienternas paddor.
 
-This repo gives the concept its own home:
+## Vald stack
 
-- a modern static front page built with Astro
-- a preserved legacy version under `/legacy/`
-- a GitHub Pages deployment flow
+- `Next.js App Router` för UI, serverrendering, route handlers och framtida backend i samma kodbas
+- `TypeScript` för tydliga domänregler kring klienter, tider, aktiviteter och behörigheter
+- `Prisma` som datalager mellan appen och databasen
+- `SQLite` i lokal utveckling för enkel uppstart
+- `PostgreSQL` är den tänkta produktionsvägen när systemet ska driftsättas på riktigt
+- `Netlify` är tänkt deploymål längre fram för appmiljön, medan legacy-materialet ligger kvar separat
 
-## Legacy route
+## Vad som finns nu
 
-The original page is kept available here:
+- intern inloggning för personal
+- databaskopplad planeringsvy
+- klientintervall per avdelning:
+  - `5.1` → `501-513`
+  - `5.2` → `514-530`
+  - `5.3` → `531-545`
+  - `5.4` → `546-557`
+  - `6.1` → `601-611`
+  - `6.2` → `612-629`
+  - `6.3` → `630-646`
+  - `6.4` → `647-660`
+- bokningsregler som blockerar överlappande tider för samma klient
+- kö för inkommande önskemål från klientpaddor
+- audit-logg för inloggning, bokningsskapande, borttagning och hantering av önskemål
+- legacy-versionen kvar under `public/legacy/html/kriminalvarden.html`
 
-- `/legacy/html/kriminalvarden.html`
+## Projektstruktur
 
-To avoid broken navigation after the split, small legacy companion pages are included for `info`, `contact`, and `index`.
+- `src/app/` innehåller routes, login och API-endpoints
+- `src/components/planner-app.tsx` innehåller personalens planeringsyta
+- `src/lib/` innehåller domänlogik, aktivitetskatalog, avdelningar och datumhjälpare
+- `src/server/` innehåller auth, Prisma-klient och serverlogik
+- `prisma/schema.prisma` beskriver datamodellen
+- `prisma/seed.mjs` fyller den lokala databasen med testdata
+- `prisma/bootstrap.mjs` sätter upp utvecklingsdatabasen från migrationerna
 
-## Local development
+## Kom igång lokalt
 
 ```bash
 npm install
+npm run db:setup
 npm run dev
 ```
 
-## Build
+Appen startar på `http://127.0.0.1:4322` om du använder samma port som i det här projektet lokalt.
+
+## Lokal testinloggning
+
+- `admin@kriminalvarden.local` / `demo-anstalt-2026`
+- `arbetsledare@kriminalvarden.local` / `demo-anstalt-2026`
+
+## Viktiga kommandon
 
 ```bash
+npm run lint
+npm run test
 npm run build
+npm run db:reset
 ```
 
-## Deploy
+## Nuvarande utvecklingsflöde
 
-GitHub Pages deploy is configured in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+För lokal utveckling använder projektet en SQLite-databas i `prisma/dev.db`. Det gör att vi snabbt kan bygga vidare på planeringslogik, inloggning och integrationer utan att behöva drifta en extern databas redan nu.
+
+När appen går vidare mot verklig drift bör vi byta till:
+
+- `PostgreSQL`
+- riktig rollstyrning och central identitetshantering
+- integration mot klienternas padda-system
+- revisionslogg med tydligare historik och spårbarhet
+- säkrare intern driftmiljö för känsliga uppgifter

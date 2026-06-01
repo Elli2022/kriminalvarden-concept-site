@@ -1,0 +1,82 @@
+.shell {
+  display: grid;
+  gap: 18px;
+  width: min(440px, 100%);
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 28px;
+  color: #f9fbfc;
+  background:
+    linear-gradient(135deg, rgba(12, 32, 47, 0.96), rgba(14, 63, 88, 0.92)),
+    linear-gradient(180deg, rgba(240, 196, 0, 0.08), transparent);
+  box-shadow: 0 28px 80px rgba(5, 19, 30, 0.18);
+}
+
+.eyebrow {
+  color: rgba(240, 196, 0, 0.95);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--font-display), serif;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 0.94;
+}
+
+.lead {
+  color: rgba(240, 246, 249, 0.82);
+  line-height: 1.6;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.label {
+  color: rgba(240, 246, 249, 0.8);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  color: #f9fbfc;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.button {
+  padding: 13px 16px;
+  border: 0;
+  border-radius: 16px;
+  color: #07131d;
+  background: linear-gradient(180deg, #ffd84a, #f0c400);
+  font-weight: 800;
+}
+
+.hint {
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(240, 246, 249, 0.82);
+  line-height: 1.6;
+}
+
+.error {
+  padding: 12px 14px;
+  border-radius: 16px;
+  color: #ffd7d7;
+  background: rgba(179, 58, 58, 0.18);
+}

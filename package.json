@@ -1,27 +1,43 @@
 {
   "name": "kriminalvarden-concept-site",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro check && astro build",
-    "preview": "astro preview",
-    "check": "astro check",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "eslint src next.config.ts eslint.config.mjs",
+    "postinstall": "prisma generate",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:setup": "node prisma/bootstrap.mjs",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:seed": "prisma db seed",
+    "db:reset": "node prisma/bootstrap.mjs"
   },
   "engines": {
     "node": ">=22.12.0"
   },
   "dependencies": {
-    "astro": "^6.4.2",
-    "typescript": "^5.9.3"
+    "@prisma/client": "^6.11.1",
+    "bcryptjs": "^3.0.2",
+    "jose": "^6.1.0",
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zod": "^4.0.17"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.9",
-    "prettier": "^3.8.3",
-    "prettier-plugin-astro": "^0.14.1"
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "prisma": "^6.11.1",
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "packageManager": "npm@10.8.2"
 }
