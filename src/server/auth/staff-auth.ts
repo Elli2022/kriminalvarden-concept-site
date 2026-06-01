@@ -1,13 +1,11 @@
 import "server-only";
 
 import bcrypt from "bcryptjs";
-import { UserRole } from "@prisma/client";
 import type { AuthenticatedUser, StaffRole } from "@/lib/planner-domain";
 import { DEMO_PASSWORD, DEMO_STAFF_USERS } from "@/server/auth/demo-users";
-import { prisma } from "@/server/db";
 import { isNetlifyDemoMode } from "@/server/runtime";
 
-function mapRole(role: UserRole): StaffRole {
+function mapRole(role: string): StaffRole {
   switch (role) {
     case "ADMIN":
       return "admin";
@@ -34,6 +32,7 @@ export async function authenticateStaffUser(
     return demoUser;
   }
 
+  const { prisma } = await import("@/server/db");
   const user = await prisma.staffUser.findUnique({
     where: {
       email: email.toLowerCase(),
