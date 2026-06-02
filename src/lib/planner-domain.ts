@@ -43,6 +43,7 @@ export interface ActivityDefinition {
 export interface ClientRecord {
   departmentId: DepartmentId;
   clientNumber: number;
+  intakeNumber: string;
   label: string;
 }
 
@@ -135,6 +136,17 @@ export function buildClientDirectory(
 ): ClientRecord[] {
   const clients: ClientRecord[] = [];
 
+  const intakeNumberOverrides: Partial<Record<number, string>> = {
+    505: "22/404",
+  };
+
+  function getIntakeNumber(clientNumber: number) {
+    return (
+      intakeNumberOverrides[clientNumber] ??
+      `22/${String(clientNumber - 101).padStart(3, "0")}`
+    );
+  }
+
   for (const department of departments) {
     for (
       let clientNumber = department.clientStart;
@@ -144,7 +156,8 @@ export function buildClientDirectory(
       clients.push({
         departmentId: department.id,
         clientNumber,
-        label: `Klient ${clientNumber}`,
+        intakeNumber: getIntakeNumber(clientNumber),
+        label: `Cell ${clientNumber}`,
       });
     }
   }

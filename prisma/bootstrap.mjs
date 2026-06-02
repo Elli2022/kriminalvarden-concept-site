@@ -48,6 +48,7 @@ async function main() {
     runCommand(sqliteBinary, [databasePath], sql);
   }
 
+  runCommand("npx", ["prisma", "generate"]);
   runCommand(process.execPath, [join(prismaDir, "seed.mjs")]);
 }
 

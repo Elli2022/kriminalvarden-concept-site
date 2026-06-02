@@ -2,10 +2,11 @@ import type { NextConfig } from "next";
 
 const shouldSendStrictTransportSecurity =
   process.env.NODE_ENV === "production";
+const isDevelopment = process.env.NODE_ENV !== "production";
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",

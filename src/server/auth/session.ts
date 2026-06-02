@@ -44,17 +44,22 @@ function isSessionPayload(value: unknown): value is SessionPayload {
 
 function getAuthSecret() {
   const secret = process.env.AUTH_SECRET;
+  const developmentFallbackSecret = "dev-only-auth-secret-change-me-32-chars";
 
   if (secret) {
-    if (secret.length < 32) {
+    if (secret.length >= 32) {
+      return secret;
+    }
+
+    if (process.env.NODE_ENV === "production") {
       throw new Error("AUTH_SECRET maste vara minst 32 tecken.");
     }
 
-    return secret;
+    return developmentFallbackSecret;
   }
 
   if (process.env.NODE_ENV !== "production") {
-    return "dev-only-auth-secret-change-me-32-chars";
+    return developmentFallbackSecret;
   }
 
   throw new Error("AUTH_SECRET saknas i produktionsmiljon.");

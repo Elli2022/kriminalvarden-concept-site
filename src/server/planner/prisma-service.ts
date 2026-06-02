@@ -260,6 +260,7 @@ export async function getPlannerSnapshotFromPrisma(input: {
     clients: clients.map<ClientRecord>((client) => ({
       clientNumber: client.clientNumber,
       departmentId: client.currentDepartmentId as DepartmentId,
+      intakeNumber: client.intakeNumber,
       label: client.label,
     })),
     bookings: bookings.map(formatBooking),

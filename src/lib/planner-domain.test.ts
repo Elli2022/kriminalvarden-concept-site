@@ -20,7 +20,19 @@ describe("buildClientDirectory", () => {
 
     expect(clients).toHaveLength(5);
     expect(clients[0]?.clientNumber).toBe(501);
+    expect(clients[0]?.intakeNumber).toBe("22/400");
+    expect(clients[0]?.label).toBe("Cell 501");
     expect(clients.at(-1)?.clientNumber).toBe(515);
+  });
+
+  it("keeps explicit intake overrides for known cells", () => {
+    const departments: DepartmentDefinition[] = [
+      { id: "5.1", label: "Avdelning 5.1", clientStart: 505, clientEnd: 505 },
+    ];
+
+    const clients = buildClientDirectory(departments);
+
+    expect(clients[0]?.intakeNumber).toBe("22/404");
   });
 });
 

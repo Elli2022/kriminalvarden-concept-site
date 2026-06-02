@@ -3,7 +3,6 @@
 import Link from "next/link";
 import {
   startTransition,
-  useDeferredValue,
   useRef,
   useState,
 } from "react";
@@ -17,6 +16,7 @@ import {
 import {
   ACTIVITY_BY_ID,
   ACTIVITY_DEFINITIONS,
+  CLIENT_BY_NUMBER,
   DEFAULT_ACTIVITY_ID,
   TOTAL_CAPACITY,
 } from "@/lib/planner-config";
@@ -34,6 +34,7 @@ import {
   type ActivityId,
   type AuthenticatedUser,
   type BookingSource,
+  type ClientRecord,
   type DepartmentId,
   type PlannerSnapshot,
   type TabletRequest,
@@ -80,6 +81,10 @@ function getSourceLabel(source: BookingSource): string {
     default:
       return "Personal";
   }
+}
+
+function getCellOptionLabel(client: ClientRecord) {
+  return `Cell ${client.clientNumber} • Intagningsnr ${client.intakeNumber}`;
 }
 
 function readCookieValue(name: string) {
@@ -134,7 +139,9 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
   const [selectedClientNumber, setSelectedClientNumber] = useState<number>(
     initialSnapshot.clients[0]?.clientNumber ?? 0,
   );
-  const [searchValue, setSearchValue] = useState("");
+  const [filteredClientNumber, setFilteredClientNumber] = useState<number | null>(
+    null,
+  );
   const [showOnlyBooked, setShowOnlyBooked] = useState(false);
   const [draft, setDraft] = useState<DraftState>(() =>
     createEmptyDraft(initialSnapshot.clients[0]?.clientNumber),
@@ -142,7 +149,6 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const deferredSearchValue = useDeferredValue(searchValue);
   const refreshSequenceRef = useRef(0);
   const canRemoveExistingBookings = canDeleteBooking(session.role);
   const canHandleTabletRequests = canDismissTabletRequest(session.role);
@@ -174,6 +180,17 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
       }
 
       setSnapshot(payload);
+      setFilteredClientNumber((currentFilter) => {
+        if (currentFilter === null) {
+          return currentFilter;
+        }
+
+        return payload.clients.some(
+          (client) => client.clientNumber === currentFilter,
+        )
+          ? currentFilter
+          : null;
+      });
 
       const nextSelectedClientNumber = payload.clients.some(
         (client) => client.clientNumber === selectedClientNumber,
@@ -216,16 +233,16 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
   }
 
   const departmentClients = snapshot.clients;
+  const clientLookup = new Map(
+    departmentClients.map((client) => [client.clientNumber, client] as const),
+  );
   const requestFeed = snapshot.requests;
-  const searchTerm = deferredSearchValue.trim().toLowerCase();
 
   const visibleClients = departmentClients.filter((client) => {
-    const matchesSearch =
-      searchTerm.length === 0 ||
-      client.label.toLowerCase().includes(searchTerm) ||
-      String(client.clientNumber).includes(searchTerm);
-
-    if (!matchesSearch) {
+    if (
+      filteredClientNumber !== null &&
+      client.clientNumber !== filteredClientNumber
+    ) {
       return false;
     }
 
@@ -453,6 +470,7 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
   function handleDepartmentSelect(departmentId: DepartmentId) {
     startTransition(() => {
       setSelectedDepartmentId(departmentId);
+      setFilteredClientNumber(null);
       setFeedback(null);
     });
 
@@ -492,7 +510,7 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
     const nextClientNumber = departmentClients[0]?.clientNumber;
 
     startTransition(() => {
-      setSearchValue("");
+      setFilteredClientNumber(null);
       setShowOnlyBooked(false);
       setFeedback(null);
       setSelectedClientNumber(nextClientNumber ?? 0);
@@ -503,6 +521,26 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
   const boardLastUpdated = snapshot.lastUpdatedAt
     ? formatSwedishDateTime(snapshot.lastUpdatedAt)
     : "Ingen ändring ännu";
+
+  const selectedClientIntakeNumber =
+    selectedClient?.intakeNumber ?? "Ej valt";
+
+  function handleCellFilterChange(value: string) {
+    const nextClientNumber = value ? Number(value) : null;
+
+    startTransition(() => {
+      setFilteredClientNumber(nextClientNumber);
+      setFeedback(null);
+    });
+
+    if (nextClientNumber !== null) {
+      setSelectedClientNumber(nextClientNumber);
+      setDraft((currentDraft) => ({
+        ...currentDraft,
+        clientNumber: String(nextClientNumber),
+      }));
+    }
+  }
 
   return (
     <main className={styles.page}>
@@ -623,14 +661,19 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
             </label>
 
             <label className={styles.field}>
-              <span className={styles.fieldLabel}>Sök klient</span>
-              <input
-                className={styles.input}
-                type="search"
-                placeholder="Sök på klientnummer eller klient"
-                value={searchValue}
-                onChange={(event) => setSearchValue(event.target.value)}
-              />
+              <span className={styles.fieldLabel}>Cellnummer</span>
+              <select
+                className={styles.select}
+                value={filteredClientNumber ? String(filteredClientNumber) : ""}
+                onChange={(event) => handleCellFilterChange(event.target.value)}
+              >
+                <option value="">Alla celler i avdelningen</option>
+                {departmentClients.map((client) => (
+                  <option key={client.clientNumber} value={client.clientNumber}>
+                    {getCellOptionLabel(client)}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label className={styles.toggleCard}>
@@ -696,7 +739,7 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
                   <table className={styles.table}>
                     <thead>
                       <tr>
-                        <th className={styles.clientColumn}>Klient</th>
+                        <th className={styles.clientColumn}>Cell</th>
                         {ACTIVITY_DEFINITIONS.map((activity) => (
                           <th key={activity.id}>{activity.shortLabel}</th>
                         ))}
@@ -729,7 +772,7 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
                                   {client.clientNumber}
                                 </span>
                                 <span className={styles.clientMeta}>
-                                  {client.label}
+                                  Intagningsnr {client.intakeNumber}
                                 </span>
                                 {hasOpenRequest ? (
                                   <span className={styles.requestMarker}>
@@ -803,7 +846,7 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
               <form className={styles.form} onSubmit={handleScheduleSubmit}>
                 <div className={styles.fieldGrid}>
                   <label className={styles.field}>
-                    <span className={styles.fieldLabel}>Klient</span>
+                    <span className={styles.fieldLabel}>Cellnummer</span>
                     <select
                       className={styles.select}
                       value={draft.clientNumber}
@@ -819,7 +862,7 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
                           key={client.clientNumber}
                           value={client.clientNumber}
                         >
-                          {client.clientNumber}
+                          {getCellOptionLabel(client)}
                         </option>
                       ))}
                     </select>
@@ -943,10 +986,11 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
 
             <section className={styles.panel}>
               <h2 className={styles.panelTitle}>
-                Aktiv klient {selectedClient ? selectedClient.clientNumber : ""}
+                Aktiv cell {selectedClient ? selectedClient.clientNumber : ""}
               </h2>
               <p className={styles.panelIntro}>
-                Tidslinjen visar vad som redan är lagt för klienten samma dag.
+                Intagningsnummer {selectedClientIntakeNumber}. Tidslinjen visar
+                vad som redan är lagt för cellen samma dag.
               </p>
 
               {selectedClientBookings.length === 0 ? (
@@ -1035,7 +1079,13 @@ export function PlannerApp({ session, initialSnapshot }: PlannerAppProps) {
                       <div className={styles.requestHeader}>
                         <div>
                           <div className={styles.requestClient}>
-                            Klient {request.clientNumber}
+                            Cell {request.clientNumber}
+                          </div>
+                          <div className={styles.requestTime}>
+                            Intagningsnr{" "}
+                            {clientLookup.get(request.clientNumber)?.intakeNumber ??
+                              CLIENT_BY_NUMBER[request.clientNumber]?.intakeNumber ??
+                              "Ej angivet"}
                           </div>
                           <div className={styles.requestTime}>
                             Inlagt {formatSwedishTime(request.submittedAt)}

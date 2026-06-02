@@ -28,6 +28,15 @@ const activityTypes = [
   { id: "trial", label: "Rättegång", shortLabel: "Rättegång", requestable: false, colorToken: "#7e3848", sortOrder: 11 },
 ];
 
+const intakeNumberOverrides = new Map([[505, "22/404"]]);
+
+function getIntakeNumber(clientNumber) {
+  return (
+    intakeNumberOverrides.get(clientNumber) ??
+    `22/${String(clientNumber - 101).padStart(3, "0")}`
+  );
+}
+
 function getTodayDateKey() {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Stockholm",
@@ -83,7 +92,8 @@ async function main() {
       ) {
         clients.push({
           clientNumber,
-          label: `Klient ${clientNumber}`,
+          intakeNumber: getIntakeNumber(clientNumber),
+          label: `Cell ${clientNumber}`,
           currentDepartmentId: department.id,
         });
       }

@@ -59,6 +59,7 @@ model Department {
 model Client {
   id                  String          @id @default(cuid())
   clientNumber        Int             @unique
+  intakeNumber        String          @unique
   label               String
   currentDepartmentId String
   active              Boolean         @default(true)
